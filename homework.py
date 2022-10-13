@@ -29,7 +29,7 @@ HOMEWORK_STATUSES = {
 
 
 def send_message(bot, message):
-    '''Отправка сообщения ботом'''
+    """Отправка сообщения ботом."""
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logging.info('Бот отправил сообщение в чат')
@@ -38,7 +38,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp=int(time.time())):
-    '''Получения ответа от API Практикума'''
+    """Получения ответа от API Практикума."""
     params = {'from_date': current_timestamp}
     homework_statuses = requests.get(
         ENDPOINT, headers=HEADERS, params=params)
@@ -49,7 +49,7 @@ def get_api_answer(current_timestamp=int(time.time())):
 
 
 def check_response(response):
-    '''Проверка ответа от API Практикума'''
+    """Проверка ответа от API Практикума."""
     if type(response) == dict:
         if len(response) == 0:
             logging.error('API вернул пустой словарь')
@@ -68,7 +68,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    '''Получение статуса домашней работы'''
+    """Получение статуса домашней работы."""
     if 'homework_name' not in homework:
         logging.error('Ключ homework_name отсутсвует в ответе API Практикума')
         raise KeyError('Ключ homework_name отсутсвует в ответе API Практикума')
@@ -85,7 +85,7 @@ def parse_status(homework):
 
 
 def check_tokens():
-    '''Проверка наличия токенов'''
+    """Проверка наличия токенов."""
     if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
         return True
     logging.critical('Отсутствие обязательных переменных окружения')
