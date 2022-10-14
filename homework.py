@@ -1,5 +1,6 @@
 import requests
 import os
+import sys
 import time
 import telegram
 import logging
@@ -47,11 +48,9 @@ def get_api_answer(current_timestamp=int(time.time())):
         homework_statuses = requests.get(
             ENDPOINT, headers=HEADERS, params=params)
         if homework_statuses.status_code != HTTPStatus.OK:
-            logging.error('Недоступность эндпоинта API Практикума')
             raise Exception('Недоступность эндпоинта API Практикума')
         return homework_statuses.json()
     except Exception as error:
-        logging.error(f'Ошибка получить ответ от API Практикума: {error}')
         raise Exception(f'Ошибка получить ответ от API Практикума: {error}')
 
 
@@ -60,9 +59,9 @@ def check_response(response):
     if not isinstance(response, dict):
         raise TypeError('Ответ API не является словарём')
     homeworks = response.get('homeworks')
-    if 'homeworks' not in response.keys():
+    if 'homeworks' not in response:
         raise Exception('В ответе API отсутствует ключ "homeworks"')
-    if 'current_date' not in response.keys():
+    if 'current_date' not in response:
         raise Exception('В ответе API отсутствует ключ "current_date"')
     if not isinstance(homeworks, list):
         raise Exception('Значение ключа "homeworks" не список')
@@ -90,26 +89,25 @@ def check_tokens():
 
 def main():
     """Основная логика работы бота."""
-    if check_tokens():
-        bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        current_timestamp = 0
-        while True:
-            try:
-                response = get_api_answer(current_timestamp)
-                homeworks = check_response(response)
-                if homeworks:
-                    status = parse_status(homeworks[0])
-                    send_message(bot, status)
-                else:
-                    logging.info('Изменения в домашних работах отсутствуют')
-            except Exception as error:
-                logging.error(f'Ошибка: {error}')
-            finally:
-                current_timestamp = int(time.time())
-                time.sleep(RETRY_TIME)
-    else:
+    if not check_tokens():
         logging.critical('Отсутствие обязательных переменных окружения')
-        raise Exception('Отсутствие обязательных переменных окружения')
+        sys.exit('Отсутствие обязательных переменных окружения')
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    current_timestamp = 0
+    while True:
+        try:
+            response = get_api_answer(current_timestamp)
+            homeworks = check_response(response)
+            if homeworks:
+                status = parse_status(homeworks[0])
+                send_message(bot, status)
+            else:
+                logging.info('Изменения в домашних работах отсутствуют')
+        except Exception as error:
+            logging.error(f'Ошибка: {error}')
+        finally:
+            current_timestamp = int(time.time())
+            time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':
